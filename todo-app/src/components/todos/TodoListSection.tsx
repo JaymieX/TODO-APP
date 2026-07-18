@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { useTodos } from "@/features/todos/todo-context";
 import { filterTodos, formatEstimatedTime, getTaskHighlight } from "@/features/todos/todo-utils";
 import type { TodoFilter } from "@/features/todos/types";
+import { TodoActions } from "./TodoActions";
 
 const filters: TodoFilter[] = ["all", "active", "completed"];
 
 export function TodoListSection() {
-  const { todos, isReady, toggleTodo, removeTodo, clearCompleted } = useTodos();
+  const { todos, isReady, toggleTodo, updateTodo, removeTodo, clearCompleted } = useTodos();
   const [filter, setFilter] = useState<TodoFilter>("all");
   const visibleTodos = useMemo(() => filterTodos(todos, filter), [filter, todos]);
 
@@ -84,14 +85,11 @@ export function TodoListSection() {
                     ) : null}
                   </span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => removeTodo(todo.id)}
-                  aria-label={`Remove ${todo.title}`}
-                  className="shrink-0 text-sm font-medium text-muted transition hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
-                >
-                  Remove
-                </button>
+                <TodoActions
+                  todo={todo}
+                  onUpdate={(updates) => updateTodo(todo.id, updates)}
+                  onRemove={() => removeTodo(todo.id)}
+                />
               </li>
             );
           })}

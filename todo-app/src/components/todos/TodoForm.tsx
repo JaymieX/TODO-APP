@@ -20,7 +20,12 @@ export function TodoForm() {
     }
 
     // Store one minute total even though the form uses friendlier day and minute fields.
-    addTodo(cleanTitle, estimatedDays * 1440 + estimatedMinutes, dueDate || null);
+    const estimatedTime = estimatedDays * 1440 + estimatedMinutes;
+    if (estimatedTime < 1) {
+      return;
+    }
+
+    addTodo(cleanTitle, estimatedTime, dueDate || null);
     setTitle("");
     setEstimatedDays(0);
     setEstimatedMinutes(30);
@@ -60,7 +65,7 @@ export function TodoForm() {
               type="number"
               min="0"
               max="1439"
-              step="5"
+              step="1"
               value={estimatedMinutes}
               onChange={(event) => setEstimatedMinutes(Number(event.target.value))}
               className={fieldClass}

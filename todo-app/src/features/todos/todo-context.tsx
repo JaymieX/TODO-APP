@@ -15,6 +15,7 @@ type TodoContextValue = {
   isReady: boolean;
   addTodo: (title: string, estimatedTime: number, dueDate: string | null) => void;
   toggleTodo: (id: string) => void;
+  updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => void;
   removeTodo: (id: string) => void;
   clearCompleted: () => void;
 };
@@ -51,6 +52,11 @@ export function TodoProvider({ children }: { children: ReactNode }) {
           current.map((todo) =>
             todo.id === id ? { ...todo, completed: !todo.completed } : todo,
           ),
+        );
+      },
+      updateTodo(id, updates) {
+        setTodos((current) =>
+          current.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo)),
         );
       },
       removeTodo(id) {
