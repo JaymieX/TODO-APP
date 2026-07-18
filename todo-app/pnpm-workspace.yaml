@@ -1,0 +1,4 @@
+ignoreScripts: true
+minimumReleaseAge: 43200
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
