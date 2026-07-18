@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Todo Thingy
 
-## Getting Started
+A small todo and calendar app for learning React, TypeScript, Next.js, and Tailwind CSS without hiding the important ideas behind a large framework.
 
-First, run the development server:
+## Run the app
+
+This project uses pnpm:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Tasks are saved in your browser, so there is no account or backend to configure.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm lint
+pnpm test
+pnpm test:watch
+pnpm build
+```
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```text
+src/
+├── pages/                  # Next.js pages and their route-level composition
+├── components/             # Layout, todo, and calendar UI components
+├── features/
+│   ├── todos/              # Todo state, storage, types, and pure helpers
+│   └── calendar/           # Pure calendar and deadline helpers
+├── styles/                 # Tailwind theme and global CSS
+└── test/                   # Shared test setup
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project uses Next.js's Pages Router because the route files are especially clear for learners. `pages/index.tsx` creates `/`, while `pages/calendar.tsx` creates `/calendar`. The special `_app.tsx` file sets up state and global CSS for every page.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Components are grouped by what they render: shared layout, todo UI, or calendar UI. Feature folders contain the non-visual logic that those components use.
 
-## Deploy on Vercel
+## How the data moves
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`TodoProvider` is the single source of task state. Interactive components access it through `useTodos()`. The provider loads local storage after React hydrates the page and saves again whenever the task list changes.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pure calculations live outside React components. For example, filters, progress, deadline checks, and calendar dates can be tested without rendering a page.
+
+## Styling
+
+This app uses Tailwind CSS 4's CSS-first configuration. App-specific design tokens are defined in `src/styles/theme.css` with `@theme` and produce semantic classes such as `bg-app`, `text-muted`, and `border-danger`.
+
+Use regular Tailwind utilities for common spacing and layout. Add a theme token when a color, font, radius, or shadow represents part of the app's reusable visual language.
+
+## Good places to start learning
+
+- Change a route layout in `src/pages/index.tsx` or `src/pages/calendar.tsx`.
+- Follow a form submission from `TodoForm` into the provider.
+- Add a new derived value to `todo-utils.ts`, test it, and display it in a component.
+- Adjust a semantic design token in `src/styles/theme.css` and see every use update.
+
+The app intentionally has no database, authentication, state library, or component framework. Those can be introduced later when the product needs them.

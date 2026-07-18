@@ -1,0 +1,22 @@
+@theme {
+  --color-app: #020617;
+  --color-surface: #0f172a;
+  --color-panel: #080f20;
+  --color-line: #263248;
+  --color-ink: #f1f5f9;
+  --color-muted: #94a3b8;
+  --color-subtle: #64748b;
+  --color-primary: #67e8f9;
+  --color-primary-hover: #a5f3fc;
+  --color-success: #6ee7b7;
+  --color-warning: #fbbf24;
+  --color-danger: #fb7185;
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-title: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --text-display: 3.625rem;
+  --text-display--line-height: 1;
+  --tracking-eyebrow: 0.25em;
+  --radius-card: 1.5rem;
+  --shadow-card: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+}
