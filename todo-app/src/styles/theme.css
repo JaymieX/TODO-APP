@@ -1,16 +1,16 @@
-@theme {
-  --color-app: #020617;
-  --color-surface: #0f172a;
-  --color-panel: #080f20;
-  --color-line: #263248;
-  --color-ink: #f1f5f9;
-  --color-muted: #94a3b8;
-  --color-subtle: #64748b;
-  --color-primary: #67e8f9;
-  --color-primary-hover: #a5f3fc;
-  --color-success: #6ee7b7;
-  --color-warning: #fbbf24;
-  --color-danger: #fb7185;
+@theme inline {
+  --color-app: var(--theme-app);
+  --color-surface: var(--theme-surface);
+  --color-panel: var(--theme-panel);
+  --color-line: var(--theme-line);
+  --color-ink: var(--theme-ink);
+  --color-muted: var(--theme-muted);
+  --color-subtle: var(--theme-subtle);
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: var(--theme-primary-hover);
+  --color-success: var(--theme-success);
+  --color-warning: var(--theme-warning);
+  --color-danger: var(--theme-danger);
 
   --font-sans: Arial, Helvetica, sans-serif;
   --font-title: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -19,4 +19,67 @@
   --tracking-eyebrow: 0.25em;
   --radius-card: 1.5rem;
   --shadow-card: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+}
+
+/* Add a new theme here, then register its id and label in features/themes/themes.ts. */
+:root,
+[data-theme="midnight-blue"] {
+  color-scheme: dark;
+  --theme-app: #020617;
+  --theme-surface: #0f172a;
+  --theme-panel: #080f20;
+  --theme-line: #263248;
+  --theme-ink: #f1f5f9;
+  --theme-muted: #94a3b8;
+  --theme-subtle: #64748b;
+  --theme-primary: #67e8f9;
+  --theme-primary-hover: #a5f3fc;
+  --theme-success: #6ee7b7;
+  --theme-warning: #fbbf24;
+  --theme-danger: #fb7185;
+}
+
+[data-theme="jirai-kei"] {
+  color-scheme: dark;
+  --theme-app: #20212b;
+  --theme-surface: #f9d4e3;
+  --theme-panel: #edb4cd;
+  --theme-line: #32252d;
+  --theme-ink: #32252d;
+  --theme-muted: #6b4a59;
+  --theme-subtle: #976d80;
+  --theme-primary: #32252d;
+  --theme-primary-hover: #5b3949;
+  --theme-success: #763555;
+  --theme-warning: #9a522e;
+  --theme-danger: #ad285d;
+}
+
+/* The Jirai Kei palette pairs a charcoal plaid backdrop with blush stationery-like cards. */
+[data-theme="jirai-kei"] main.bg-app {
+  background-color: var(--theme-app);
+  background-image:
+    linear-gradient(90deg, rgb(255 255 255 / 0.025) 50%, transparent 50%),
+    linear-gradient(rgb(255 255 255 / 0.025) 50%, transparent 50%),
+    linear-gradient(90deg, transparent 47%, rgb(249 212 227 / 0.06) 47% 53%, transparent 53%),
+    linear-gradient(transparent 47%, rgb(249 212 227 / 0.06) 47% 53%, transparent 53%);
+  background-size: 4rem 4rem, 4rem 4rem, 8rem 8rem, 8rem 8rem;
+}
+
+[data-theme="jirai-kei"] [class~="rounded-card"] {
+  border-width: 2px;
+  box-shadow: 0 8px 0 rgb(50 37 45 / 0.55);
+}
+
+[data-theme="jirai-kei"] [class~="bg-surface/90"] {
+  background-color: var(--theme-surface);
+  background-image:
+    linear-gradient(90deg, rgb(255 255 255 / 0.18) 50%, transparent 50%),
+    linear-gradient(rgb(255 255 255 / 0.18) 50%, transparent 50%);
+  background-size: 1.5rem 1.5rem;
+}
+
+[data-theme="jirai-kei"] .font-title {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.025em;
 }

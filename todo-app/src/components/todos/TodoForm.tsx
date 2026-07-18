@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTodos } from "@/features/todos/todo-context";
 
 const fieldClass =
-  "rounded-xl border border-line bg-app px-3 py-2 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "rounded-xl border border-line bg-app px-3 py-2 text-sm text-surface outline-none transition placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export function TodoForm() {
   const { addTodo, isReady } = useTodos();
@@ -80,7 +80,7 @@ export function TodoForm() {
         <button
           type="submit"
           disabled={!isReady || !title.trim()}
-          className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-app transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-surface transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add task
         </button>

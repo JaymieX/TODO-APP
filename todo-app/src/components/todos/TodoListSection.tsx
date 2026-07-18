@@ -23,7 +23,7 @@ export function TodoListSection() {
                 aria-pressed={filter === item}
                 onClick={() => setFilter(item)}
                 className={`rounded-full px-3 py-2 text-sm font-medium capitalize transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                  filter === item ? "bg-primary text-app" : "bg-panel text-muted hover:text-ink"
+                  filter === item ? "bg-primary text-surface" : "bg-panel text-muted hover:text-ink"
                 }`}
               >
                 {item}

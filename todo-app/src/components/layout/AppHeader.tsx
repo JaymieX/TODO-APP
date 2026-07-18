@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeSelector } from "./ThemeSelector";
 
 type AppHeaderProps = {
   activeView: "todos" | "calendar";
@@ -8,7 +9,7 @@ type AppHeaderProps = {
 };
 
 const baseLink = "rounded-full px-4 py-2 text-sm font-semibold transition";
-const activeLink = "bg-primary text-app";
+const activeLink = "bg-primary text-surface";
 const inactiveLink =
   "border border-line text-muted hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -21,22 +22,25 @@ export function AppHeader({ activeView, eyebrow, title, description }: AppHeader
         {description ? <p className="max-w-xl text-sm text-muted sm:text-base">{description}</p> : null}
       </div>
 
-      <nav aria-label="Main navigation" className="flex items-center gap-2">
-        <Link
-          href="/"
-          aria-current={activeView === "todos" ? "page" : undefined}
-          className={`${baseLink} ${activeView === "todos" ? activeLink : inactiveLink}`}
-        >
-          Todos
-        </Link>
-        <Link
-          href="/calendar"
-          aria-current={activeView === "calendar" ? "page" : undefined}
-          className={`${baseLink} ${activeView === "calendar" ? activeLink : inactiveLink}`}
-        >
-          Calendar
-        </Link>
-      </nav>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <ThemeSelector />
+        <nav aria-label="Main navigation" className="flex items-center gap-2">
+          <Link
+            href="/"
+            aria-current={activeView === "todos" ? "page" : undefined}
+            className={`${baseLink} ${activeView === "todos" ? activeLink : inactiveLink}`}
+          >
+            Todos
+          </Link>
+          <Link
+            href="/calendar"
+            aria-current={activeView === "calendar" ? "page" : undefined}
+            className={`${baseLink} ${activeView === "calendar" ? activeLink : inactiveLink}`}
+          >
+            Calendar
+          </Link>
+        </nav>
+      </div>
     </header>
   );
 }
