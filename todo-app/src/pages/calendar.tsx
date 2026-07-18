@@ -1,7 +1,8 @@
 import Head from "next/head";
 import { CalendarBrowser } from "@/components/calendar/CalendarBrowser";
 import { UpcomingTodos } from "@/components/calendar/UpcomingTodos";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { PageIntro } from "@/components/layout/AppHeader";
+import { AppShell } from "@/components/layout/AppShell";
 
 export default function CalendarPage() {
   return (
@@ -13,10 +14,9 @@ export default function CalendarPage() {
           content="View todo deadlines in a simple monthly calendar."
         />
       </Head>
-      <main className="min-h-screen bg-app px-4 py-8 text-ink sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6">
-          <AppHeader
-            activeView="calendar"
+      <AppShell activeView="calendar">
+        <div className="flex flex-col gap-6">
+          <PageIntro
             eyebrow="Calendar view"
             title="Plan your month"
             description="See deadlines at a glance and keep upcoming work moving."
@@ -26,7 +26,7 @@ export default function CalendarPage() {
             <UpcomingTodos />
           </div>
         </div>
-      </main>
+      </AppShell>
     </>
   );
 }

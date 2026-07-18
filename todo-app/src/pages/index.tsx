@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { AppShell } from "@/components/layout/AppShell";
+import { PageIntro } from "@/components/layout/AppHeader";
 import { TodoForm } from "@/components/todos/TodoForm";
 import { TodoListSection } from "@/components/todos/TodoListSection";
 import { TodoProgress } from "@/components/todos/TodoProgress";
@@ -14,10 +15,9 @@ export default function HomePage() {
           content="A small, learner-friendly todo app built with React and Next.js."
         />
       </Head>
-      <main className="min-h-screen bg-app px-4 py-8 text-ink sm:px-6 sm:py-12 lg:px-8">
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
-          <AppHeader
-            activeView="todos"
+      <AppShell activeView="todos">
+        <div className="flex w-full flex-col gap-6 lg:gap-8">
+          <PageIntro
             eyebrow="Learning React"
             title="Todo Thingy"
             description="Stay focused, keep tasks moving, and celebrate your progress."
@@ -26,7 +26,7 @@ export default function HomePage() {
           <TodoForm />
           <TodoListSection />
         </div>
-      </main>
+      </AppShell>
     </>
   );
 }
