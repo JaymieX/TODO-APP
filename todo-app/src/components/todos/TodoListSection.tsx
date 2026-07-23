@@ -7,7 +7,7 @@ import { TodoActions } from "./TodoActions";
 const filters: TodoFilter[] = ["all", "active", "completed"];
 
 export function TodoListSection() {
-  const { todos, isReady, toggleTodo, updateTodo, removeTodo, clearCompleted } = useTodos();
+  const { todos, isReady, error, toggleTodo, updateTodo, removeTodo, clearCompleted } = useTodos();
   const [filter, setFilter] = useState<TodoFilter>("all");
   const visibleTodos = useMemo(() => filterTodos(todos, filter), [filter, todos]);
 
@@ -34,7 +34,7 @@ export function TodoListSection() {
         </div>
         <button
           type="button"
-          onClick={clearCompleted}
+          onClick={() => void clearCompleted()}
           disabled={!todos.some((todo) => todo.completed)}
           className="text-sm font-medium text-muted transition hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -44,6 +44,8 @@ export function TodoListSection() {
 
       {!isReady ? (
         <p className="mt-5 rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">Loading tasks…</p>
+      ) : error ? (
+        <p role="alert" className="mt-5 rounded-xl border border-danger bg-danger/10 p-4 text-sm text-danger">{error}</p>
       ) : visibleTodos.length === 0 ? (
         <p className="mt-5 rounded-xl border border-dashed border-line p-6 text-center text-sm text-muted">
           No {filter === "all" ? "" : `${filter} `}tasks here yet.
@@ -70,7 +72,7 @@ export function TodoListSection() {
                   <input
                     type="checkbox"
                     checked={todo.completed}
-                    onChange={() => toggleTodo(todo.id)}
+                    onChange={() => void toggleTodo(todo.id)}
                     className="mt-1 size-4 accent-primary"
                   />
                   <span className="min-w-0">

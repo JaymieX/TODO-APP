@@ -4,7 +4,6 @@ export type Todo = {
   completed: boolean;
   estimatedTime: number;
   dueDate: string | null;
-  createdAt: string;
 };
 
 export type TodoFilter = "all" | "active" | "completed";

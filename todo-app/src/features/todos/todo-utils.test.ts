@@ -15,7 +15,6 @@ const todos: Todo[] = [
     completed: false,
     estimatedTime: 30,
     dueDate: null,
-    createdAt: "2026-07-18T12:00:00.000Z",
   },
   {
     id: "2",
@@ -23,7 +22,6 @@ const todos: Todo[] = [
     completed: true,
     estimatedTime: 1445,
     dueDate: "2026-07-18",
-    createdAt: "2026-07-18T12:00:00.000Z",
   },
 ];
 

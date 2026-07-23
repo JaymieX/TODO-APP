@@ -11,7 +11,19 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Tasks are saved in your browser, so there is no account or backend to configure.
+Open [http://localhost:3000](http://localhost:3000). Tasks are currently saved in your browser.
+
+## Supabase connection
+
+Tasks are stored in the Supabase `todo` table. `TodoProvider` loads the table when the app opens and saves each create, completion, edit, and deletion back to Supabase.
+
+Copy `.env.example` to `.env.local`, then add the values from your Supabase project's Connect dialog:
+
+```bash
+cp .env.example .env.local
+```
+
+Use the project URL and publishable key only. The service-role key must never be exposed through a `NEXT_PUBLIC_` variable. The table needs a generated `id` primary key plus `task_name`, `task_complete`, `estimated_time`, and `due_date` columns. If Row Level Security is enabled, add policies that allow the operations this app needs.
 
 Useful checks:
 
@@ -41,7 +53,7 @@ Components are grouped by what they render: shared layout, todo UI, or calendar 
 
 ## How the data moves
 
-`TodoProvider` is the single source of task state. Interactive components access it through `useTodos()`. The provider loads local storage after React hydrates the page and saves again whenever the task list changes.
+`TodoProvider` is the single source of task state. Interactive components access it through `useTodos()`. The provider loads from Supabase after React hydrates, then updates its state only after the corresponding database request succeeds.
 
 Pure calculations live outside React components. For example, filters, progress, deadline checks, and calendar dates can be tested without rendering a page.
 

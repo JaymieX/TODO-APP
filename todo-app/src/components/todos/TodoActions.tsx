@@ -5,8 +5,8 @@ type EditMode = "rename" | "estimate" | "due-date" | null;
 
 type TodoActionsProps = {
   todo: Todo;
-  onUpdate: (updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => void;
-  onRemove: () => void;
+  onUpdate: (updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => Promise<boolean>;
+  onRemove: () => Promise<boolean>;
 };
 
 const inputClass =
@@ -27,31 +27,34 @@ export function TodoActions({ todo, onUpdate, onRemove }: TodoActionsProps) {
 
   const closeEditor = () => setEditMode(null);
 
-  const removeDueDate = () => {
-    onUpdate({ dueDate: null });
-    closeEditor();
+  const removeDueDate = async () => {
+    if (await onUpdate({ dueDate: null })) {
+      closeEditor();
+    }
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    let wasUpdated = false;
 
     if (editMode === "rename") {
       const cleanTitle = title.trim();
       if (!cleanTitle) return;
-      onUpdate({ title: cleanTitle });
+      wasUpdated = await onUpdate({ title: cleanTitle });
     }
 
     if (editMode === "estimate") {
       const estimatedTime = estimatedDays * 1440 + estimatedMinutes;
       if (estimatedTime < 1) return;
-      onUpdate({ estimatedTime });
+      wasUpdated = await onUpdate({ estimatedTime });
     }
 
     if (editMode === "due-date") {
-      onUpdate({ dueDate: dueDate || null });
+      wasUpdated = await onUpdate({ dueDate: dueDate || null });
     }
 
-    closeEditor();
+    if (wasUpdated) closeEditor();
   };
 
   const editLabels = {
@@ -84,7 +87,7 @@ export function TodoActions({ todo, onUpdate, onRemove }: TodoActionsProps) {
           <button type="button" role="menuitem" onClick={() => openEditor("due-date")} className="w-full rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-panel">
             Change due date
           </button>
-          <button type="button" role="menuitem" onClick={onRemove} className="w-full rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-danger/10">
+          <button type="button" role="menuitem" onClick={() => void onRemove()} className="w-full rounded-lg px-3 py-2 text-left text-sm text-danger hover:bg-danger/10">
             Remove
           </button>
         </div>

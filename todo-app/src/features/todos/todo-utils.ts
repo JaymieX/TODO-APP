@@ -1,58 +1,11 @@
 import type { TaskHighlight, Todo, TodoFilter, TodoProgress } from "./types";
 
-function createId() {
-  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 export function toLocalDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
-}
-
-export function addDays(date: Date, amount: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + amount);
-  return result;
-}
-
-export function createTodo(
-  title: string,
-  estimatedTime = 30,
-  dueDate: string | null = null,
-): Todo {
-  return {
-    id: createId(),
-    title: title.trim(),
-    completed: false,
-    estimatedTime,
-    dueDate,
-    createdAt: new Date().toISOString(),
-  };
-}
-
-export function createStarterTodos(now = new Date()): Todo[] {
-  // Relative dates keep the learning examples useful whenever the app is opened.
-  return [
-    {
-      id: "starter-plan",
-      title: "Plan your day",
-      completed: false,
-      estimatedTime: 30,
-      dueDate: toLocalDateKey(addDays(now, 1)),
-      createdAt: now.toISOString(),
-    },
-    {
-      id: "starter-review",
-      title: "Review your notes",
-      completed: true,
-      estimatedTime: 45,
-      dueDate: toLocalDateKey(now),
-      createdAt: now.toISOString(),
-    },
-  ];
 }
 
 export function filterTodos(todos: Todo[], filter: TodoFilter) {

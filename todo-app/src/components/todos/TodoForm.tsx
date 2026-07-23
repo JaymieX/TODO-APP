@@ -11,7 +11,7 @@ export function TodoForm() {
   const [estimatedMinutes, setEstimatedMinutes] = useState(30);
   const [dueDate, setDueDate] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const cleanTitle = title.trim();
 
@@ -25,11 +25,13 @@ export function TodoForm() {
       return;
     }
 
-    addTodo(cleanTitle, estimatedTime, dueDate || null);
-    setTitle("");
-    setEstimatedDays(0);
-    setEstimatedMinutes(30);
-    setDueDate("");
+    const wasCreated = await addTodo(cleanTitle, estimatedTime, dueDate || null);
+    if (wasCreated) {
+      setTitle("");
+      setEstimatedDays(0);
+      setEstimatedMinutes(30);
+      setDueDate("");
+    }
   };
 
   return (

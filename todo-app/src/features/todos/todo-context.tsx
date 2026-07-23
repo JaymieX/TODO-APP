@@ -1,23 +1,16 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { loadTodos, saveTodos } from "./todo-storage";
-import { createStarterTodos, createTodo } from "./todo-utils";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { todoRepository } from "./todo-repository";
 import type { Todo } from "./types";
 
 type TodoContextValue = {
   todos: Todo[];
   isReady: boolean;
-  addTodo: (title: string, estimatedTime: number, dueDate: string | null) => void;
-  toggleTodo: (id: string) => void;
-  updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => void;
-  removeTodo: (id: string) => void;
-  clearCompleted: () => void;
+  error: string | null;
+  addTodo: (title: string, estimatedTime: number, dueDate: string | null) => Promise<boolean>;
+  toggleTodo: (id: string) => Promise<boolean>;
+  updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => Promise<boolean>;
+  removeTodo: (id: string) => Promise<boolean>;
+  clearCompleted: () => Promise<boolean>;
 };
 
 const TodoContext = createContext<TodoContextValue | null>(null);
@@ -25,48 +18,97 @@ const TodoContext = createContext<TodoContextValue | null>(null);
 export function TodoProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load browser data after hydration so the server and first client render match.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only available after hydration.
-    setTodos(loadTodos() ?? createStarterTodos());
-    setIsReady(true);
-  }, []);
+    let isCurrent = true;
 
-  useEffect(() => {
-    // Avoid replacing saved data with the empty pre-hydration state.
-    if (isReady) {
-      saveTodos(todos);
+    async function loadTodos() {
+      try {
+        const savedTodos = await todoRepository.listTodos();
+        if (isCurrent) setTodos(savedTodos);
+      } catch (caughtError) {
+        if (isCurrent) setError(caughtError instanceof Error ? caughtError.message : "Unable to load tasks.");
+      } finally {
+        if (isCurrent) setIsReady(true);
+      }
     }
-  }, [isReady, todos]);
+
+    void loadTodos();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   const value = useMemo<TodoContextValue>(
     () => ({
       todos,
       isReady,
-      addTodo(title, estimatedTime, dueDate) {
-        setTodos((current) => [...current, createTodo(title, estimatedTime, dueDate)]);
+      error,
+      async addTodo(title, estimatedTime, dueDate) {
+        try {
+          const todo = await todoRepository.createTodo({ title, estimatedTime, dueDate });
+          setTodos((current) => [...current, todo]);
+          setError(null);
+          return true;
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : "Unable to create the task.");
+          return false;
+        }
       },
-      toggleTodo(id) {
-        setTodos((current) =>
-          current.map((todo) =>
-            todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-          ),
-        );
+      async toggleTodo(id) {
+        const todo = todos.find((current) => current.id === id);
+        if (!todo) return false;
+
+        try {
+          const updatedTodo = await todoRepository.updateTodo(todo, { completed: !todo.completed });
+          setTodos((current) => current.map((item) => (item.id === id ? updatedTodo : item)));
+          setError(null);
+          return true;
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : "Unable to update the task.");
+          return false;
+        }
       },
-      updateTodo(id, updates) {
-        setTodos((current) =>
-          current.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo)),
-        );
+      async updateTodo(id, updates) {
+        const todo = todos.find((current) => current.id === id);
+        if (!todo) return false;
+
+        try {
+          const updatedTodo = await todoRepository.updateTodo(todo, updates);
+          setTodos((current) => current.map((item) => (item.id === id ? updatedTodo : item)));
+          setError(null);
+          return true;
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : "Unable to update the task.");
+          return false;
+        }
       },
-      removeTodo(id) {
-        setTodos((current) => current.filter((todo) => todo.id !== id));
+      async removeTodo(id) {
+        try {
+          await todoRepository.removeTodo(id);
+          setTodos((current) => current.filter((todo) => todo.id !== id));
+          setError(null);
+          return true;
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : "Unable to remove the task.");
+          return false;
+        }
       },
-      clearCompleted() {
-        setTodos((current) => current.filter((todo) => !todo.completed));
+      async clearCompleted() {
+        try {
+          await todoRepository.clearCompleted();
+          setTodos((current) => current.filter((todo) => !todo.completed));
+          setError(null);
+          return true;
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : "Unable to remove completed tasks.");
+          return false;
+        }
       },
     }),
-    [isReady, todos],
+    [error, isReady, todos],
   );
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;

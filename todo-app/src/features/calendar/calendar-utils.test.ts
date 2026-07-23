@@ -8,7 +8,6 @@ const todo: Todo = {
   completed: false,
   estimatedTime: 30,
   dueDate: "2026-07-18",
-  createdAt: "2026-07-18T12:00:00.000Z",
 };
 
 describe("calendar helpers", () => {
