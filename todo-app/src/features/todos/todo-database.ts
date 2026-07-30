@@ -1,4 +1,4 @@
-import { getServerSupabaseClient } from "@/features/supabase/supabase-server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Todo } from "./types";
 import type { TodoCreateInput, TodoUpdateInput } from "./todo-validation";
 
@@ -40,8 +40,13 @@ function throwDatabaseError(error: { message: string; code?: string }) {
 }
 
 export class TodoDatabase {
+  constructor(
+    private readonly client: SupabaseClient,
+    private readonly userId: string,
+  ) {}
+
   async listTodos() {
-    const { data, error } = await getServerSupabaseClient()
+    const { data, error } = await this.client
       .from("todo")
       .select(TODO_COLUMNS)
       .order("due_date", { ascending: true, nullsFirst: false });
@@ -51,13 +56,14 @@ export class TodoDatabase {
   }
 
   async createTodo({ title, estimatedTime, dueDate }: TodoCreateInput) {
-    const { data, error } = await getServerSupabaseClient()
+    const { data, error } = await this.client
       .from("todo")
       .insert({
         task_name: title,
         task_complete: false,
         estimated_time: estimatedTime,
         due_date: toDueDateValue(dueDate),
+        user_id: this.userId,
       })
       .select(TODO_COLUMNS)
       .single();
@@ -73,7 +79,7 @@ export class TodoDatabase {
     if (updates.estimatedTime !== undefined) changes.estimated_time = updates.estimatedTime;
     if (updates.dueDate !== undefined) changes.due_date = toDueDateValue(updates.dueDate);
 
-    const { data, error } = await getServerSupabaseClient()
+    const { data, error } = await this.client
       .from("todo")
       .update(changes)
       .eq("id", id)
@@ -85,7 +91,7 @@ export class TodoDatabase {
   }
 
   async removeTodo(id: string) {
-    const { data, error } = await getServerSupabaseClient()
+    const { data, error } = await this.client
       .from("todo")
       .delete()
       .eq("id", id)
@@ -97,7 +103,7 @@ export class TodoDatabase {
   }
 
   async clearCompleted() {
-    const { error } = await getServerSupabaseClient()
+    const { error } = await this.client
       .from("todo")
       .delete()
       .eq("task_complete", true);
@@ -105,5 +111,3 @@ export class TodoDatabase {
     if (error) throwDatabaseError(error);
   }
 }
-
-export const todoDatabase = new TodoDatabase();

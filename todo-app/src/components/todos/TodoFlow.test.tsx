@@ -8,6 +8,10 @@ import { TodoListSection } from "./TodoListSection";
 
 const mockTodos = vi.hoisted(() => ({ current: [] as Todo[] }));
 
+vi.mock("@clerk/nextjs", () => ({
+  useAuth: () => ({ isLoaded: true, userId: "user_test" }),
+}));
+
 vi.mock("@/features/todos/todo-repository", () => ({
   todoRepository: {
     listTodos: vi.fn(async () => [...mockTodos.current]),

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthControls } from "./AuthControls";
 import { ThemeSelector } from "./ThemeSelector";
 
 type AppHeaderProps = {
@@ -49,7 +50,10 @@ export function AppHeader({ activeView }: AppHeaderProps) {
 
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4 lg:block">
         <p className="hidden text-xs leading-5 text-subtle lg:block">Keep your plans and deadlines in one place.</p>
-        <div className="lg:mt-4"><ThemeSelector /></div>
+        <div className="flex items-center gap-3 lg:mt-4 lg:flex-col lg:items-stretch">
+          <AuthControls />
+          <ThemeSelector />
+        </div>
       </div>
     </header>
   );

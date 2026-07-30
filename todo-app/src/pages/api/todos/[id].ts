@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { TodoDatabaseError, todoDatabase } from "@/features/todos/todo-database";
+import { TodoDatabaseError } from "@/features/todos/todo-database";
+import { getAuthenticatedTodoDatabase } from "@/features/todos/todo-database-session";
 import { validateTodoUpdateInput } from "@/features/todos/todo-validation";
 
 type ErrorResponse = {
@@ -40,6 +41,12 @@ export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse<ErrorResponse | { data: unknown }>,
 ) {
+  const todoDatabase = getAuthenticatedTodoDatabase(request);
+  if (!todoDatabase) {
+    sendError(response, 401, "Sign in to access tasks.");
+    return;
+  }
+
   const id = getId(request.query.id);
   if (!id) {
     sendError(response, 400, "Task id is invalid.");

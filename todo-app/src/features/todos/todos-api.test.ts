@@ -9,9 +9,16 @@ const databaseMocks = vi.hoisted(() => ({
   updateTodo: vi.fn(),
 }));
 
+const authMocks = vi.hoisted(() => ({
+  getAuthenticatedTodoDatabase: vi.fn(),
+}));
+
 vi.mock("@/features/todos/todo-database", () => ({
   TodoDatabaseError: class TodoDatabaseError extends Error {},
-  todoDatabase: databaseMocks,
+}));
+
+vi.mock("@/features/todos/todo-database-session", () => ({
+  getAuthenticatedTodoDatabase: authMocks.getAuthenticatedTodoDatabase,
 }));
 
 import todoByIdHandler from "@/pages/api/todos/[id]";
@@ -45,7 +52,21 @@ function createResponse() {
 }
 
 describe("todo API", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authMocks.getAuthenticatedTodoDatabase.mockReturnValue(databaseMocks);
+  });
+
+  it("rejects requests without a Clerk session", async () => {
+    authMocks.getAuthenticatedTodoDatabase.mockReturnValue(null);
+    const { response, state } = createResponse();
+
+    await todoHandler(createRequest({ method: "GET" }), response);
+
+    expect(state.status).toBe(401);
+    expect(state.body).toEqual({ error: { message: "Sign in to access tasks." } });
+    expect(databaseMocks.listTodos).not.toHaveBeenCalled();
+  });
 
   it("returns tasks with HTTP 200", async () => {
     databaseMocks.listTodos.mockResolvedValue([{ id: "1", title: "Read", completed: false, estimatedTime: 15, dueDate: "2026-08-15" }]);

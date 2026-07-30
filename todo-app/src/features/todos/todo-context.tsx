@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/nextjs";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { todoRepository } from "./todo-repository";
 import type { Todo } from "./types";
@@ -16,6 +17,36 @@ type TodoContextValue = {
 const TodoContext = createContext<TodoContextValue | null>(null);
 
 export function TodoProvider({ children }: { children: ReactNode }) {
+  const { isLoaded, userId } = useAuth();
+
+  if (!isLoaded || !userId) {
+    return (
+      <TodoContext.Provider value={createEmptyContextValue(isLoaded)}>
+        {children}
+      </TodoContext.Provider>
+    );
+  }
+
+  // Remount todo state when the Clerk user changes so data cannot leak between sessions.
+  return <AuthenticatedTodoProvider key={userId}>{children}</AuthenticatedTodoProvider>;
+}
+
+function createEmptyContextValue(isReady: boolean): TodoContextValue {
+  const unavailable = async () => false;
+
+  return {
+    todos: [],
+    isReady,
+    error: null,
+    addTodo: unavailable,
+    toggleTodo: unavailable,
+    updateTodo: unavailable,
+    removeTodo: unavailable,
+    clearCompleted: unavailable,
+  };
+}
+
+function AuthenticatedTodoProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
