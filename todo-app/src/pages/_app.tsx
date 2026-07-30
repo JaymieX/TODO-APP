@@ -20,18 +20,29 @@ function AuthenticatedApp({ Component, pageProps }: AuthenticatedAppProps) {
   );
 }
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps, router }: AppProps) {
+  const isAuthPage = router.pathname.startsWith("/sign-in")
+    || router.pathname.startsWith("/sign-up");
+
   // These providers stay mounted across page navigation to preserve app and auth state.
   return (
     <ClerkProvider
       {...pageProps}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
       appearance={{
         cssLayerName: "clerk",
       }}
     >
-      <AuthBoundary>
-        <AuthenticatedApp Component={Component} pageProps={pageProps} />
-      </AuthBoundary>
+      {isAuthPage ? (
+        <Component {...pageProps} />
+      ) : (
+        <AuthBoundary>
+          <AuthenticatedApp Component={Component} pageProps={pageProps} />
+        </AuthBoundary>
+      )}
     </ClerkProvider>
   );
 }

@@ -1,4 +1,5 @@
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { AccountMenu } from "./AccountMenu";
 
 const authButton =
   "cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -19,7 +20,7 @@ export function AuthControls() {
         </SignUpButton>
       </Show>
       <Show when="signed-in">
-        <UserButton />
+        <AccountMenu />
       </Show>
     </div>
   );
