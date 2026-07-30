@@ -6,7 +6,7 @@ type TodoContextValue = {
   todos: Todo[];
   isReady: boolean;
   error: string | null;
-  addTodo: (title: string, estimatedTime: number, dueDate: string | null) => Promise<boolean>;
+  addTodo: (title: string, estimatedTime: number, dueDate: string) => Promise<boolean>;
   toggleTodo: (id: string) => Promise<boolean>;
   updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => Promise<boolean>;
   removeTodo: (id: string) => Promise<boolean>;
@@ -62,7 +62,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         if (!todo) return false;
 
         try {
-          const updatedTodo = await todoRepository.updateTodo(todo, { completed: !todo.completed });
+          const updatedTodo = await todoRepository.updateTodo(id, { completed: !todo.completed });
           setTodos((current) => current.map((item) => (item.id === id ? updatedTodo : item)));
           setError(null);
           return true;
@@ -76,7 +76,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         if (!todo) return false;
 
         try {
-          const updatedTodo = await todoRepository.updateTodo(todo, updates);
+          const updatedTodo = await todoRepository.updateTodo(id, updates);
           setTodos((current) => current.map((item) => (item.id === id ? updatedTodo : item)));
           setError(null);
           return true;

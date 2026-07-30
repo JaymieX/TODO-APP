@@ -22,9 +22,12 @@ vi.mock("@/features/todos/todo-repository", () => ({
       mockTodos.current = [...mockTodos.current, todo];
       return todo;
     }),
-    updateTodo: vi.fn(async (todo: Todo, updates: Partial<Todo>) => {
+    updateTodo: vi.fn(async (id: string, updates: Partial<Todo>) => {
+      const todo = mockTodos.current.find((item) => item.id === id);
+      if (!todo) throw new Error("Task not found");
+
       const updatedTodo = { ...todo, ...updates };
-      mockTodos.current = mockTodos.current.map((item) => (item.id === todo.id ? updatedTodo : item));
+      mockTodos.current = mockTodos.current.map((item) => (item.id === id ? updatedTodo : item));
       return updatedTodo;
     }),
     removeTodo: vi.fn(async (id: string) => {
@@ -60,6 +63,7 @@ describe("todo flow", () => {
 
     await screen.findByText("Plan your day");
     await user.type(screen.getByLabelText("Task name"), "Learn component tests");
+    await user.type(screen.getByLabelText("Due date"), "2026-08-15");
     await user.click(screen.getByRole("button", { name: "Add task" }));
 
     const checkbox = await screen.findByRole("checkbox", { name: /Learn component tests/ });
@@ -140,9 +144,35 @@ describe("todo flow", () => {
     await user.type(screen.getByLabelText("Task name"), "Quick task");
     await user.clear(screen.getByLabelText("Estimated minutes"));
     await user.type(screen.getByLabelText("Estimated minutes"), "1");
+    await user.type(screen.getByLabelText("Due date"), "2026-08-15");
     await user.click(screen.getByRole("button", { name: "Add task" }));
 
     await screen.findByText("Quick task");
     expect(screen.getByText("Est. 1 min")).toBeInTheDocument();
+  });
+
+  it("highlights every required field after an invalid submission", async () => {
+    const user = userEvent.setup();
+    render(
+      <TodoProvider>
+        <TodoForm />
+      </TodoProvider>,
+    );
+
+    await screen.findByRole("button", { name: "Add task" });
+    const addTaskButton = screen.getByRole("button", { name: "Add task" });
+    expect(addTaskButton).toBeEnabled();
+
+    await user.clear(screen.getByLabelText("Estimated minutes"));
+    await user.type(screen.getByLabelText("Estimated minutes"), "0");
+    await user.click(addTaskButton);
+
+    expect(screen.getByText("Enter a task name.")).toBeInTheDocument();
+    expect(screen.getByText("Enter an estimate of at least 1 minute.")).toBeInTheDocument();
+    expect(screen.getByText("Choose a due date.")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Task name/)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/Estimated days/)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/Estimated minutes/)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/Due date/)).toHaveAttribute("aria-invalid", "true");
   });
 });

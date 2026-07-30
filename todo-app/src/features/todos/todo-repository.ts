@@ -1,114 +1,70 @@
-import { supabase } from "@/features/supabase/supabase-client";
 import type { Todo } from "./types";
+import type { TodoCreateInput, TodoUpdateInput } from "./todo-validation";
 
-const TODO_COLUMNS = "id, task_name, task_complete, estimated_time, due_date";
-
-type TodoRow = {
-  id: string;
-  task_name: string;
-  task_complete: boolean;
-  estimated_time: number | string;
-  due_date: string | null;
+type ApiError = {
+  error?: {
+    message?: string;
+  };
 };
 
-type TodoInput = Pick<Todo, "title" | "estimatedTime" | "dueDate">;
-type TodoUpdates = Partial<Pick<Todo, "title" | "completed" | "estimatedTime" | "dueDate">>;
+type ApiSuccess<T> = {
+  data: T;
+};
 
-function toTodo(row: TodoRow): Todo {
-  return {
-    id: row.id,
-    title: row.task_name,
-    completed: row.task_complete,
-    estimatedTime: Number(row.estimated_time),
-    // The UI uses date-only values, so preserve the calendar date from Supabase.
-    dueDate: row.due_date?.slice(0, 10) ?? null,
-  };
-}
+async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  let response: Response;
 
-function toDueDateValue(dueDate: string | null) {
-  return dueDate ? `${dueDate}T12:00:00.000Z` : null;
-}
+  try {
+    response = await fetch(url, options);
+  } catch {
+    throw new Error("Unable to reach the task service. Check your connection and try again.");
+  }
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Unable to update tasks in Supabase.";
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const body = (await response.json().catch(() => null)) as ApiSuccess<T> | ApiError | null;
+  if (!response.ok) {
+    throw new Error(body && "error" in body && body.error?.message
+      ? body.error.message
+      : `Task request failed (${response.status}).`);
+  }
+
+  if (!body || !("data" in body)) {
+    throw new Error("The task service returned an invalid response.");
+  }
+
+  return body.data;
 }
 
 export class TodoRepository {
-  async listTodos() {
-    const { data, error } = await supabase
-      .getClient()
-      .from("todo")
-      .select(TODO_COLUMNS)
-      .order("due_date", { ascending: true, nullsFirst: false });
-
-    if (error) {
-      throw new Error(getErrorMessage(error));
-    }
-
-    return (data as TodoRow[]).map(toTodo);
+  listTodos() {
+    return request<Todo[]>("/api/todos");
   }
 
-  async createTodo({ title, estimatedTime, dueDate }: TodoInput) {
-    const { data, error } = await supabase
-      .getClient()
-      .from("todo")
-      .insert({
-        task_name: title,
-        task_complete: false,
-        estimated_time: estimatedTime,
-        due_date: toDueDateValue(dueDate),
-      })
-      .select(TODO_COLUMNS)
-      .single();
-
-    if (error) {
-      throw new Error(getErrorMessage(error));
-    }
-
-    return toTodo(data as TodoRow);
+  createTodo(todo: TodoCreateInput) {
+    return request<Todo>("/api/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(todo),
+    });
   }
 
-  async updateTodo(todo: Todo, updates: TodoUpdates) {
-    const changes: Partial<TodoRow> = {};
-
-    if (updates.title !== undefined) changes.task_name = updates.title;
-    if (updates.completed !== undefined) changes.task_complete = updates.completed;
-    if (updates.estimatedTime !== undefined) changes.estimated_time = updates.estimatedTime;
-    if (updates.dueDate !== undefined) changes.due_date = toDueDateValue(updates.dueDate);
-
-    const { data, error } = await supabase
-      .getClient()
-      .from("todo")
-      .update(changes)
-      .eq("id", todo.id)
-      .select(TODO_COLUMNS)
-      .single();
-
-    if (error) {
-      throw new Error(getErrorMessage(error));
-    }
-
-    return toTodo(data as TodoRow);
+  updateTodo(id: string, updates: TodoUpdateInput) {
+    return request<Todo>(`/api/todos/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
   }
 
-  async removeTodo(id: string) {
-    const { error } = await supabase.getClient().from("todo").delete().eq("id", id);
-
-    if (error) {
-      throw new Error(getErrorMessage(error));
-    }
+  removeTodo(id: string) {
+    return request<void>(`/api/todos/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
-  async clearCompleted() {
-    const { error } = await supabase
-      .getClient()
-      .from("todo")
-      .delete()
-      .eq("task_complete", true);
-
-    if (error) {
-      throw new Error(getErrorMessage(error));
-    }
+  clearCompleted() {
+    return request<void>("/api/todos?completed=true", { method: "DELETE" });
   }
 }
 
