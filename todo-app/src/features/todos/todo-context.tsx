@@ -8,7 +8,8 @@ type TodoContextValue = {
   isReady: boolean;
   error: string | null;
   addTodo: (title: string, estimatedTime: number, dueDate: string) => Promise<boolean>;
-  addCreatedTodo: (todo: Todo) => void;
+  syncTodo: (todo: Todo) => void;
+  removeSyncedTodo: (id: string) => void;
   toggleTodo: (id: string) => Promise<boolean>;
   updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => Promise<boolean>;
   removeTodo: (id: string) => Promise<boolean>;
@@ -40,7 +41,8 @@ function createEmptyContextValue(isReady: boolean): TodoContextValue {
     isReady,
     error: null,
     addTodo: unavailable,
-    addCreatedTodo: () => undefined,
+    syncTodo: () => undefined,
+    removeSyncedTodo: () => undefined,
     toggleTodo: unavailable,
     updateTodo: unavailable,
     removeTodo: unavailable,
@@ -79,11 +81,15 @@ function AuthenticatedTodoProvider({ children }: { children: ReactNode }) {
       todos,
       isReady,
       error,
-      addCreatedTodo(todo) {
-        // Assistant-created tasks already exist in the database, so only sync local state.
+      syncTodo(todo) {
+        // Assistant changes already exist in the database, so only sync local state.
         setTodos((current) => current.some((item) => item.id === todo.id)
-          ? current
+          ? current.map((item) => (item.id === todo.id ? todo : item))
           : [...current, todo]);
+      },
+      removeSyncedTodo(id) {
+        // Assistant deletions already happened in the database, so only sync local state.
+        setTodos((current) => current.filter((todo) => todo.id !== id));
       },
       async addTodo(title, estimatedTime, dueDate) {
         try {

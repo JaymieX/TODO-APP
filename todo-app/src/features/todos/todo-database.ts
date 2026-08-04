@@ -66,6 +66,7 @@ export class TodoDatabase {
     const { data, error } = await this.client
       .from("todo")
       .select(TODO_COLUMNS)
+      .eq("user_id", this.userId)
       .order("due_date", { ascending: true, nullsFirst: false });
 
     if (error) throwDatabaseError(error);
@@ -97,6 +98,11 @@ export class TodoDatabase {
   }
 
   async updateTodo(id: string, updates: TodoUpdateInput) {
+    const result = await this.updateTodoWithRecord(id, updates);
+    return result?.todo ?? null;
+  }
+
+  async updateTodoWithRecord(id: string, updates: TodoUpdateInput) {
     const changes: Partial<TodoRow> = {};
     if (updates.title !== undefined) changes.task_name = updates.title;
     if (updates.completed !== undefined) changes.task_complete = updates.completed;
@@ -107,23 +113,35 @@ export class TodoDatabase {
       .from("todo")
       .update(changes)
       .eq("id", id)
-      .select(TODO_COLUMNS)
+      .eq("user_id", this.userId)
+      .select(CREATED_TODO_COLUMNS)
       .maybeSingle();
 
     if (error) throwDatabaseError(error);
-    return data ? toTodo(data as TodoRow) : null;
+    if (!data) return null;
+
+    const row = data as TodoRow;
+    return { todo: toTodo(row), record: toTodoRecord(row) };
   }
 
   async removeTodo(id: string) {
+    return Boolean(await this.removeTodoWithRecord(id));
+  }
+
+  async removeTodoWithRecord(id: string) {
     const { data, error } = await this.client
       .from("todo")
       .delete()
       .eq("id", id)
-      .select("id")
+      .eq("user_id", this.userId)
+      .select(CREATED_TODO_COLUMNS)
       .maybeSingle();
 
     if (error) throwDatabaseError(error);
-    return Boolean(data);
+    if (!data) return null;
+
+    const row = data as TodoRow;
+    return { todo: toTodo(row), record: toTodoRecord(row) };
   }
 
   async clearCompleted() {

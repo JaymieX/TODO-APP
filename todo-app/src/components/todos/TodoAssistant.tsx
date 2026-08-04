@@ -4,11 +4,12 @@ import { useTodos } from "@/features/todos/todo-context";
 import type { Todo } from "@/features/todos/types";
 
 type AssistantApiResponse =
-  | { data: { message: string; structuredTask: TodoRecord; todo: Todo } }
+  | { data: { message: string; operation: "add" | "modify" | "delete"; structuredTask?: TodoRecord; todo: Todo } }
+  | { data: { message: string; operation: "refusal" } }
   | { error: { message: string } };
 
 export function TodoAssistant() {
-  const { addCreatedTodo } = useTodos();
+  const { removeSyncedTodo, syncTodo } = useTodos();
   const [message, setMessage] = useState("");
   const [answer, setAnswer] = useState("");
   const [structuredTask, setStructuredTask] = useState<TodoRecord | null>(null);
@@ -37,8 +38,16 @@ export function TodoAssistant() {
         throw new Error("error" in result ? result.error.message : "The assistant could not respond.");
       }
 
-      addCreatedTodo(result.data.todo);
-      setStructuredTask(result.data.structuredTask);
+      if (result.data.operation === "refusal") {
+        setStructuredTask(null);
+      } else if (result.data.operation === "delete") {
+        removeSyncedTodo(result.data.todo.id);
+      } else {
+        syncTodo(result.data.todo);
+      }
+      if (result.data.operation !== "refusal") {
+        setStructuredTask(result.data.structuredTask ?? null);
+      }
       setAnswer(result.data.message);
       setMessage("");
     } catch (caughtError) {
@@ -51,9 +60,8 @@ export function TodoAssistant() {
   return (
     <section aria-labelledby="assistant-title" className="rounded-card border border-line bg-surface/90 p-5">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-eyebrow text-primary">Powered by Groq</p>
-        <h2 id="assistant-title" className="mt-2 text-lg font-semibold text-ink">AI task creator</h2>
-        <p className="mt-1 text-sm text-muted">Describe one task naturally and the assistant will add it to your list.</p>
+        <h2 id="assistant-title" className="mt-2 text-lg font-semibold text-ink">Quick Task Manager</h2>
+        <p className="mt-1 text-sm text-muted">Describe a task to add, modify, or delete.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -62,7 +70,7 @@ export function TodoAssistant() {
           id="assistant-message"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Add a 30-minute grocery run due tomorrow"
+          placeholder="Add groceries, mark them complete, or delete the task"
           className="min-w-0 flex-1 rounded-xl border border-line bg-app px-3 py-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary/20"
           disabled={isSending}
         />
@@ -71,7 +79,7 @@ export function TodoAssistant() {
           disabled={isSending || !message.trim()}
           className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-surface transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSending ? "Creating…" : "Create task"}
+          {isSending ? "Working…" : "Apply task change"}
         </button>
       </form>
 
