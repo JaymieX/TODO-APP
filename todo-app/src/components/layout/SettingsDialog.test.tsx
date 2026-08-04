@@ -20,8 +20,20 @@ vi.mock("@clerk/nextjs", () => ({
 vi.mock("./GeneralSettings", () => ({
   GeneralSettings: () => <p>General preferences</p>,
 }));
+vi.mock("./UsageSettings", () => ({
+  UsageSettings: () => <p>Assistant usage details</p>,
+}));
 
 describe("SettingsDialog", () => {
+  it("opens assistant usage from the usage tab", async () => {
+    const user = userEvent.setup();
+
+    render(<SettingsDialog isOpen onClose={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Usage" }));
+
+    expect(screen.getByText("Assistant usage details")).toBeInTheDocument();
+  });
+
   it("opens Clerk account management from the account tab", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();

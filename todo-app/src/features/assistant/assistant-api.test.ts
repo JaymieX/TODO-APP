@@ -9,6 +9,10 @@ const databaseMocks = vi.hoisted(() => ({
   updateTodoWithRecord: vi.fn(),
 }));
 const sessionMocks = vi.hoisted(() => ({ getAuthenticatedTodoDatabase: vi.fn() }));
+const rateLimitMocks = vi.hoisted(() => ({ consumeRequest: vi.fn() }));
+const rateLimitSessionMocks = vi.hoisted(() => ({
+  getAuthenticatedRateLimitDatabase: vi.fn(),
+}));
 const langchainMocks = vi.hoisted(() => ({
   createModel: vi.fn(),
   invoke: vi.fn(),
@@ -30,6 +34,9 @@ vi.mock("@langchain/groq", () => ({
 }));
 vi.mock("@/features/todos/todo-database-session", () => ({
   getAuthenticatedTodoDatabase: sessionMocks.getAuthenticatedTodoDatabase,
+}));
+vi.mock("@/features/rate-limit/rate-limit-database-session", () => ({
+  getAuthenticatedRateLimitDatabase: rateLimitSessionMocks.getAuthenticatedRateLimitDatabase,
 }));
 
 import handler from "@/pages/api/assistant";
@@ -60,6 +67,12 @@ describe("assistant API", () => {
     vi.clearAllMocks();
     authMocks.getAuth.mockReturnValue({ isAuthenticated: true, userId: "user_test123" });
     sessionMocks.getAuthenticatedTodoDatabase.mockReturnValue(databaseMocks);
+    rateLimitSessionMocks.getAuthenticatedRateLimitDatabase.mockReturnValue(rateLimitMocks);
+    rateLimitMocks.consumeRequest.mockResolvedValue({
+      allowed: true,
+      remaining: 29,
+      resetAt: "2026-08-05T13:30:00.000Z",
+    });
     databaseMocks.listTodos.mockResolvedValue([]);
     vi.stubEnv("GROQ_SECRET_KEY", "test-secret");
     vi.stubEnv("GROQ_CHAT_URL", "https://groq.test/openai/v1/chat/completions");
@@ -262,15 +275,50 @@ describe("assistant API", () => {
   it("rejects unauthenticated and invalid requests before calling Groq", async () => {
     authMocks.getAuth.mockReturnValue({ isAuthenticated: false, userId: null });
     sessionMocks.getAuthenticatedTodoDatabase.mockReturnValue(null);
+    rateLimitSessionMocks.getAuthenticatedRateLimitDatabase.mockReturnValue(null);
     const unauthorized = createResponse();
     await handler(createRequest({ body: { message: "Hello" } }), unauthorized.response);
     expect(unauthorized.state.status).toBe(401);
 
     authMocks.getAuth.mockReturnValue({ isAuthenticated: true, userId: "user_test123" });
     sessionMocks.getAuthenticatedTodoDatabase.mockReturnValue(databaseMocks);
+    rateLimitSessionMocks.getAuthenticatedRateLimitDatabase.mockReturnValue(rateLimitMocks);
     const invalid = createResponse();
     await handler(createRequest({ body: { message: "   " } }), invalid.response);
     expect(invalid.state.status).toBe(422);
+    expect(langchainMocks.createModel).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 without contacting Groq after 30 requests in the window", async () => {
+    rateLimitMocks.consumeRequest.mockResolvedValue({
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+    const { response, state } = createResponse();
+
+    await handler(createRequest({ body: { message: "Add a task" } }), response);
+
+    expect(state.status).toBe(429);
+    expect(state.body).toEqual({
+      error: { message: "Daily assistant request limit reached. Try again later." },
+    });
+    expect(response.setHeader).toHaveBeenCalledWith("Retry-After", expect.any(String));
+    expect(databaseMocks.listTodos).not.toHaveBeenCalled();
+    expect(langchainMocks.createModel).not.toHaveBeenCalled();
+  });
+
+  it("does not contact Groq when the rate limit cannot be checked", async () => {
+    rateLimitMocks.consumeRequest.mockRejectedValue(new Error("database down"));
+    const { response, state } = createResponse();
+
+    await handler(createRequest({ body: { message: "Add a task" } }), response);
+
+    expect(state.status).toBe(500);
+    expect(state.body).toEqual({
+      error: { message: "Unable to check the assistant request limit." },
+    });
+    expect(databaseMocks.listTodos).not.toHaveBeenCalled();
     expect(langchainMocks.createModel).not.toHaveBeenCalled();
   });
 

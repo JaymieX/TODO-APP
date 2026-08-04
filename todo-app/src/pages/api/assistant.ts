@@ -2,6 +2,7 @@ import { getAuth } from "@clerk/nextjs/server";
 import { ChatGroq } from "@langchain/groq";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createListTasksTool } from "@/features/assistant/list-tasks-tool";
+import { getAuthenticatedRateLimitDatabase } from "@/features/rate-limit/rate-limit-database-session";
 import { TodoDatabaseError, type TodoRecord } from "@/features/todos/todo-database";
 import { getAuthenticatedTodoDatabase } from "@/features/todos/todo-database-session";
 import {
@@ -196,7 +197,8 @@ export default async function handler(
 
   const auth = getAuth(request);
   const todoDatabase = getAuthenticatedTodoDatabase(request);
-  if (!auth.isAuthenticated || !todoDatabase) {
+  const rateLimitDatabase = getAuthenticatedRateLimitDatabase(request);
+  if (!auth.isAuthenticated || !todoDatabase || !rateLimitDatabase) {
     sendError(response, 401, "Sign in to use the assistant.");
     return;
   }
@@ -213,6 +215,22 @@ export default async function handler(
 
   if (!message || message.length > config.maxMessageLength) {
     sendError(response, 422, `Message must be between 1 and ${config.maxMessageLength} characters.`);
+    return;
+  }
+
+  try {
+    const rateLimit = await rateLimitDatabase.consumeRequest();
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((Date.parse(rateLimit.resetAt) - Date.now()) / 1000),
+      );
+      response.setHeader("Retry-After", String(retryAfterSeconds));
+      sendError(response, 429, "Daily assistant request limit reached. Try again later.");
+      return;
+    }
+  } catch {
+    sendError(response, 500, "Unable to check the assistant request limit.");
     return;
   }
 

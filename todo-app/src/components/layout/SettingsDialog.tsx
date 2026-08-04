@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { adaptiveClerkAppearance } from "@/components/auth/clerk-appearance";
 import { GeneralSettings } from "./GeneralSettings";
+import { UsageSettings } from "./UsageSettings";
 
-type SettingsTab = "general" | "account";
+type SettingsTab = "general" | "usage" | "account";
 
 type SettingsDialogProps = {
   isOpen: boolean;
@@ -24,6 +25,14 @@ function AccountIcon() {
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 5 6v5c0 4.6 2.8 8.1 7 10 4.2-1.9 7-5.4 7-10V6l-7-3Z" />
       <path strokeLinecap="round" d="m9.5 12 1.6 1.6 3.5-3.6" />
+    </svg>
+  );
+}
+
+function UsageIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+      <path strokeLinecap="round" d="M5 19V9m7 10V5m7 14v-7" />
     </svg>
   );
 }
@@ -65,6 +74,7 @@ function AccountSecuritySettings({ onOpenClerk }: { onOpenClerk: () => void }) {
 
 const tabs: Array<{ id: SettingsTab; label: string; icon: typeof GeneralIcon }> = [
   { id: "general", label: "General", icon: GeneralIcon },
+  { id: "usage", label: "Usage", icon: UsageIcon },
   { id: "account", label: "Account & security", icon: AccountIcon },
 ];
 
@@ -182,6 +192,7 @@ export function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
 
           <div className="pr-8">
             {activeTab === "general" ? <GeneralSettings /> : null}
+            {activeTab === "usage" ? <UsageSettings /> : null}
             {activeTab === "account" ? (
               <AccountSecuritySettings onOpenClerk={openClerkAccount} />
             ) : null}
