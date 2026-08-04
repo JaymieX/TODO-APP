@@ -8,6 +8,7 @@ type TodoContextValue = {
   isReady: boolean;
   error: string | null;
   addTodo: (title: string, estimatedTime: number, dueDate: string) => Promise<boolean>;
+  addCreatedTodo: (todo: Todo) => void;
   toggleTodo: (id: string) => Promise<boolean>;
   updateTodo: (id: string, updates: Partial<Pick<Todo, "title" | "estimatedTime" | "dueDate">>) => Promise<boolean>;
   removeTodo: (id: string) => Promise<boolean>;
@@ -39,6 +40,7 @@ function createEmptyContextValue(isReady: boolean): TodoContextValue {
     isReady,
     error: null,
     addTodo: unavailable,
+    addCreatedTodo: () => undefined,
     toggleTodo: unavailable,
     updateTodo: unavailable,
     removeTodo: unavailable,
@@ -77,6 +79,12 @@ function AuthenticatedTodoProvider({ children }: { children: ReactNode }) {
       todos,
       isReady,
       error,
+      addCreatedTodo(todo) {
+        // Assistant-created tasks already exist in the database, so only sync local state.
+        setTodos((current) => current.some((item) => item.id === todo.id)
+          ? current
+          : [...current, todo]);
+      },
       async addTodo(title, estimatedTime, dueDate) {
         try {
           const todo = await todoRepository.createTodo({ title, estimatedTime, dueDate });

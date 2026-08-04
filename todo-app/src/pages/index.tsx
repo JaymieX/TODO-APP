@@ -2,6 +2,7 @@ import Head from "next/head";
 import { AppShell } from "@/components/layout/AppShell";
 import { PageIntro } from "@/components/layout/AppHeader";
 import { TodoForm } from "@/components/todos/TodoForm";
+import { TodoAssistant } from "@/components/todos/TodoAssistant";
 import { TodoListSection } from "@/components/todos/TodoListSection";
 import { TodoProgress } from "@/components/todos/TodoProgress";
 
@@ -24,6 +25,7 @@ export default function HomePage() {
           />
           <TodoProgress />
           <TodoForm />
+          <TodoAssistant />
           <TodoListSection />
         </div>
       </AppShell>
